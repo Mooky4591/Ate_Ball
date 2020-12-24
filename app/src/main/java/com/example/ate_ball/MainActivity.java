@@ -18,7 +18,7 @@ public class MainActivity extends AppCompatActivity {
         Spinner distancespin;
         RadioButton $, $$, $$$, $$$$;
 
-
+//initialize each component
         findbttn = (Button) findViewById(R.id.find_bttn);
         distancespin = (Spinner) findViewById(R.id.distance);
         $ = (RadioButton) findViewById(R.id.one_dollar);
