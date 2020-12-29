@@ -33,7 +33,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         setContentView(R.layout.activity_main);
 
 //API: https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=-33.8670522,151.1957362&radius=500&types=food&key=AIzaSyABF2V9P8AcXW3iM_n7Wz--xIbVob5UIXg
-
+//API_KEY: AIzaSyABF2V9P8AcXW3iM_n7Wz--xIbVob5UIXg
         Button findbttn;
         Spinner distancespin;
         final RadioGroup RG;
