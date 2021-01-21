@@ -1,15 +1,20 @@
 package com.example.ate_ball;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Looper;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -19,14 +24,23 @@ import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.Toast;
 
-import java.util.ArrayList;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
 
-public class MainActivity extends AppCompatActivity implements LocationListener {
+import java.util.ArrayList;
+import java.util.List;
+
+public class MainActivity extends AppCompatActivity {
 
     public String Char;
     public Integer dist;
     public double lat;
-    public double lng;
+    public double lon;
+    private static final int REQUEST_CODE_LOCATION_PERMISSION = 1;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,7 +51,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         Button findbttn;
         Spinner distancespin;
         final RadioGroup RG;
-        LocationManager locationManager;
 
 
 //initialize each component
@@ -47,31 +60,31 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
 
 //Capturing a value on the change of radio buttons
-RG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-    @Override
-    public void onCheckedChanged(RadioGroup group, int checkedId) {
-       View radioButton = RG.findViewById(checkedId);
-        int index = RG.indexOfChild(radioButton);
-        switch (index){
-            case 0:
-                Char = "$";
-                Toast.makeText(getApplicationContext(), Char, Toast.LENGTH_SHORT).show();
-                break;
-            case 1:
-                Char = "$$";
-                Toast.makeText(getApplicationContext(), Char, Toast.LENGTH_SHORT).show();
-                break;
-            case 2:
-                Char = "$$$";
-                Toast.makeText(getApplicationContext(), Char, Toast.LENGTH_SHORT).show();
-                break;
-            case 3:
-                Char = "$$$$";
-                Toast.makeText(getApplicationContext(), Char, Toast.LENGTH_SHORT).show();
-                break;
-        }
-    }
-});
+        RG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                View radioButton = RG.findViewById(checkedId);
+                int index = RG.indexOfChild(radioButton);
+                switch (index) {
+                    case 0:
+                        Char = "$";
+                        Toast.makeText(getApplicationContext(), Char, Toast.LENGTH_SHORT).show();
+                        break;
+                    case 1:
+                        Char = "$$";
+                        Toast.makeText(getApplicationContext(), Char, Toast.LENGTH_SHORT).show();
+                        break;
+                    case 2:
+                        Char = "$$$";
+                        Toast.makeText(getApplicationContext(), Char, Toast.LENGTH_SHORT).show();
+                        break;
+                    case 3:
+                        Char = "$$$$";
+                        Toast.makeText(getApplicationContext(), Char, Toast.LENGTH_SHORT).show();
+                        break;
+                }
+            }
+        });
 
 //creating the spinner elements
         ArrayList<Integer> list = new ArrayList<>();
@@ -93,19 +106,48 @@ RG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             }
 
             @Override
-            public void onNothingSelected(AdapterView <?> parent) {
+            public void onNothingSelected(AdapterView<?> parent) {
             }
         });
+
 
         findbttn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(getApplicationContext(), "Selected price: " + Char + " Selected distance: " + dist + " Longitude: " + getLong() + " Latitude: " + getLat(), Toast.LENGTH_LONG).show();
-            }
-        });
+                //check for permission to access location service
+                if (ContextCompat.checkSelfPermission(
+                        getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(
+                            MainActivity.this,
+                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                            REQUEST_CODE_LOCATION_PERMISSION
+                    );
+                } else {
+                    getCurrentLocation();
+                }
+                Toast.makeText(getApplicationContext(), "Selected price: " + Char + " Selected distance: " + dist + " Longitude: " + lon + " Latitude: " + lat, Toast.LENGTH_LONG).show();
 
-        //Creating location manager
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+            }
+
+        });
+    }
+
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_CODE_LOCATION_PERMISSION && grantResults.length > 0) {
+            getCurrentLocation();
+        } else {
+            Toast.makeText(this, "Permission denied!", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    void getCurrentLocation() {
+        final LocationRequest locationRequest = new LocationRequest();
+        locationRequest.setInterval(10000);
+        locationRequest.setFastestInterval(3000);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
@@ -116,36 +158,21 @@ RG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, (LocationListener) this);
+        LocationServices.getFusedLocationProviderClient(MainActivity.this)
+                .requestLocationUpdates(locationRequest, new LocationCallback() {
+                    @Override
+                    public void onLocationResult(LocationResult locationResult) {
+                        super.onLocationResult(locationResult);
+                        LocationServices.getFusedLocationProviderClient(MainActivity.this)
+                                .removeLocationUpdates(this);
+                        if (locationResult != null && locationResult.getLocations().size() > 0) {
+                            int latestLocationIndex = locationResult.getLocations().size() - 1;
+                            lat = locationResult.getLocations().get(latestLocationIndex).getLatitude();
+                            lon = locationResult.getLocations().get(latestLocationIndex).getLongitude();
+                        }
+                    }
 
-    }
 
-    @Override
-    public void onLocationChanged(Location location) {
-        lat = location.getLatitude();
-        lng = location.getLongitude();
-    }
-
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-
-    }
-
-    @Override
-    public void onProviderEnabled(String provider) {
-
-    }
-
-    @Override
-    public void onProviderDisabled(String provider) {
-
-    }
-
-    public double getLat(){
-        return lat;
-    }
-
-    public double getLong(){
-        return lng;
+                },  Looper.getMainLooper());
     }
 }
