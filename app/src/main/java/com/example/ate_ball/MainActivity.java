@@ -127,19 +127,9 @@ public class MainActivity extends AppCompatActivity {
                     getCurrentLocation();
                 }
                 Toast.makeText(getApplicationContext(), "Selected price: " + Char + " Selected distance: " + dist + " Longitude: " + lon + " Latitude: " + lat, Toast.LENGTH_LONG).show();
-
             }
 
         });
-    }
-
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_CODE_LOCATION_PERMISSION && grantResults.length > 0) {
-            getCurrentLocation();
-        } else {
-            Toast.makeText(this, "Permission denied!", Toast.LENGTH_SHORT).show();
-        }
     }
 
     void getCurrentLocation() {
