@@ -24,6 +24,13 @@ import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
@@ -34,10 +41,13 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    public String Char;
     public Integer dist;
     public double lat;
     public double lon;
+    public String price;
+    public String latitude;
+    public String longitude;
+    public String meters;
     private static final int REQUEST_CODE_LOCATION_PERMISSION = 1;
 
 
@@ -46,7 +56,21 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-//API: https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=-33.8670522,151.1957362&radius=500&types=food&key=AIzaSyABF2V9P8AcXW3iM_n7Wz--xIbVob5UIXg
+        if (ContextCompat.checkSelfPermission(
+                getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION
+        ) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(
+                    MainActivity.this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    REQUEST_CODE_LOCATION_PERMISSION
+            );
+        } else {
+            getCurrentLocation();
+        }
+
+
+//https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=39.1683897,-86.4835522&radius=1500&type=restaurant&key=AIzaSyABF2V9P8AcXW3iM_n7Wz--xIbVob5UIXg
+//https://maps.googleapis.com/maps/api/place/nearbysearch/json?location="lat","long"&radius="dist"&type=restaurant&key="API_KEY"
 //API_KEY: AIzaSyABF2V9P8AcXW3iM_n7Wz--xIbVob5UIXg
         Button findbttn;
         Spinner distancespin;
@@ -57,7 +81,8 @@ public class MainActivity extends AppCompatActivity {
         findbttn = (Button) findViewById(R.id.find_bttn);
         distancespin = (Spinner) findViewById(R.id.distance);
         RG = (RadioGroup) findViewById(R.id.priceGroup);
-
+        latitude = Double.toString(lat);
+        longitude = Double.toString(lon);
 
 //Capturing a value on the change of radio buttons
         RG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
@@ -67,20 +92,20 @@ public class MainActivity extends AppCompatActivity {
                 int index = RG.indexOfChild(radioButton);
                 switch (index) {
                     case 0:
-                        Char = "$";
-                        Toast.makeText(getApplicationContext(), Char, Toast.LENGTH_SHORT).show();
+                        price = "1";
+                        Toast.makeText(getApplicationContext(), price, Toast.LENGTH_SHORT).show();
                         break;
                     case 1:
-                        Char = "$$";
-                        Toast.makeText(getApplicationContext(), Char, Toast.LENGTH_SHORT).show();
+                        price = "2";
+                        Toast.makeText(getApplicationContext(), price, Toast.LENGTH_SHORT).show();
                         break;
                     case 2:
-                        Char = "$$$";
-                        Toast.makeText(getApplicationContext(), Char, Toast.LENGTH_SHORT).show();
+                        price = "3";
+                        Toast.makeText(getApplicationContext(), price, Toast.LENGTH_SHORT).show();
                         break;
                     case 3:
-                        Char = "$$$$";
-                        Toast.makeText(getApplicationContext(), Char, Toast.LENGTH_SHORT).show();
+                        price = "4";
+                        Toast.makeText(getApplicationContext(), price, Toast.LENGTH_SHORT).show();
                         break;
                 }
             }
@@ -102,6 +127,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 dist = (int) parent.getItemAtPosition(position);
+
+                //convert it to meters
+                dist = (dist * 1609);
+
+                meters = String.valueOf(dist);
                 Toast.makeText(parent.getContext(), "Selected: " + dist, Toast.LENGTH_LONG).show();
             }
 
@@ -114,19 +144,42 @@ public class MainActivity extends AppCompatActivity {
         findbttn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                getCurrentLocation();
                 //check for permission to access location service
-                if (ContextCompat.checkSelfPermission(
-                        getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION
-                ) != PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions(
-                            MainActivity.this,
-                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                            REQUEST_CODE_LOCATION_PERMISSION
-                    );
-                } else {
-                    getCurrentLocation();
-                }
-                Toast.makeText(getApplicationContext(), "Selected price: " + Char + " Selected distance: " + dist + " Longitude: " + lon + " Latitude: " + lat, Toast.LENGTH_LONG).show();
+//                if (ContextCompat.checkSelfPermission(
+//                        getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION
+//                ) != PackageManager.PERMISSION_GRANTED) {
+//                    ActivityCompat.requestPermissions(
+//                            MainActivity.this,
+//                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+//                            REQUEST_CODE_LOCATION_PERMISSION
+//                    );
+//                } else {
+//                    getCurrentLocation();
+//                }
+                Toast.makeText(getApplicationContext(), "Selected price: " + price + " Selected distance: " + meters + " Longitude: " + longitude + " Latitude: " + latitude, Toast.LENGTH_LONG).show();
+
+                // Instantiate the RequestQueue
+                RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+                String url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + latitude + "," + longitude + "&radius=" + meters + "&type=restaurant&maxprice=" + price + "&key=AIzaSyABF2V9P8AcXW3iM_n7Wz--xIbVob5UIXg";
+
+
+                // Creating new string request and displaying the results of the API call
+                StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
+                        new Response.Listener<String>() {
+                            @Override
+                            public void onResponse(String response) {
+                               Toast.makeText(getApplicationContext(), "Response " + response, Toast.LENGTH_SHORT).show();
+                            }
+                        }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                       // Toast.makeText(getApplicationContext(), "That didn't work!", Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+                queue.add(stringRequest);
             }
 
         });
@@ -158,11 +211,22 @@ public class MainActivity extends AppCompatActivity {
                         if (locationResult != null && locationResult.getLocations().size() > 0) {
                             int latestLocationIndex = locationResult.getLocations().size() - 1;
                             lat = locationResult.getLocations().get(latestLocationIndex).getLatitude();
+                            latitude = Double.toString(lat);
                             lon = locationResult.getLocations().get(latestLocationIndex).getLongitude();
+                            longitude = Double.toString(lon);
                         }
                     }
 
 
                 },  Looper.getMainLooper());
+    }
+
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_CODE_LOCATION_PERMISSION && grantResults.length > 0) {
+            getCurrentLocation();
+        } else {
+            Toast.makeText(this, "Permission denied!", Toast.LENGTH_SHORT).show();
+        }
     }
 }
