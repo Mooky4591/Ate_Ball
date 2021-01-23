@@ -15,6 +15,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Looper;
 import android.util.Log;
+
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -31,10 +32,14 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.gson.JsonArray;
+
+import org.json.JSONArray;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -146,40 +151,21 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
 
                 getCurrentLocation();
-                //check for permission to access location service
-//                if (ContextCompat.checkSelfPermission(
-//                        getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION
-//                ) != PackageManager.PERMISSION_GRANTED) {
-//                    ActivityCompat.requestPermissions(
-//                            MainActivity.this,
-//                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-//                            REQUEST_CODE_LOCATION_PERMISSION
-//                    );
-//                } else {
-//                    getCurrentLocation();
-//                }
-                Toast.makeText(getApplicationContext(), "Selected price: " + price + " Selected distance: " + meters + " Longitude: " + longitude + " Latitude: " + latitude, Toast.LENGTH_LONG).show();
 
-                // Instantiate the RequestQueue
-                RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
-                String url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + latitude + "," + longitude + "&radius=" + meters + "&type=restaurant&maxprice=" + price + "&key=AIzaSyABF2V9P8AcXW3iM_n7Wz--xIbVob5UIXg";
-
-
-                // Creating new string request and displaying the results of the API call
-                StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                        new Response.Listener<String>() {
-                            @Override
-                            public void onResponse(String response) {
-                               Toast.makeText(getApplicationContext(), "Response " + response, Toast.LENGTH_SHORT).show();
-                            }
-                        }, new Response.ErrorListener() {
+                PlacesService placesService = new PlacesService(MainActivity.this);
+                placesService.getPlaces(latitude, longitude, meters, price, new PlacesService.VolleyResponseListener() {
                     @Override
-                    public void onErrorResponse(VolleyError error) {
-                       // Toast.makeText(getApplicationContext(), "That didn't work!", Toast.LENGTH_SHORT).show();
+                    public void onError(String Message) {
+                        Toast.makeText(MainActivity.this, Message, Toast.LENGTH_SHORT).show();
+
+                    }
+
+                    @Override
+                    public void onResponse(String Places) {
+                        Toast.makeText(MainActivity.this, Places, Toast.LENGTH_SHORT).show();
                     }
                 });
 
-                queue.add(stringRequest);
             }
 
         });
