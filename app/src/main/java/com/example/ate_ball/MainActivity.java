@@ -6,43 +6,25 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
-import android.app.AlertDialog;
-import android.content.Context;
 import android.content.pm.PackageManager;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Looper;
-import android.util.Log;
 
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.Toast;
-
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonArrayRequest;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
-import com.google.gson.JsonArray;
-
-import org.json.JSONArray;
 
 import java.util.ArrayList;
-import java.util.List;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -54,6 +36,8 @@ public class MainActivity extends AppCompatActivity {
     public String longitude;
     public String meters;
     private static final int REQUEST_CODE_LOCATION_PERMISSION = 1;
+    PlacesService placesService = new PlacesService(MainActivity.this);
+
 
 
     @Override
@@ -74,9 +58,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-//https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=39.1683897,-86.4835522&radius=1500&type=restaurant&key=AIzaSyABF2V9P8AcXW3iM_n7Wz--xIbVob5UIXg
-//https://maps.googleapis.com/maps/api/place/nearbysearch/json?location="lat","long"&radius="dist"&type=restaurant&key="API_KEY"
-//API_KEY: AIzaSyABF2V9P8AcXW3iM_n7Wz--xIbVob5UIXg
         Button findbttn;
         Spinner distancespin;
         final RadioGroup RG;
@@ -122,6 +103,7 @@ public class MainActivity extends AppCompatActivity {
         list.add(10);
         list.add(15);
         list.add(20);
+
 //create the array adapter and drop down menu for the spinner
         ArrayAdapter<Integer> arrayAdapter = new ArrayAdapter<Integer>(this, android.R.layout.simple_spinner_item, list);
         arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -152,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
 
                 getCurrentLocation();
 
-                PlacesService placesService = new PlacesService(MainActivity.this);
+                //create the API request and pass the parameters
                 placesService.getPlaces(latitude, longitude, meters, price, new PlacesService.VolleyResponseListener() {
                     @Override
                     public void onError(String Message) {
@@ -171,6 +153,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    //Gets the current GPS coordinates of the user
     void getCurrentLocation() {
         final LocationRequest locationRequest = new LocationRequest();
         locationRequest.setInterval(10000);
@@ -196,6 +179,8 @@ public class MainActivity extends AppCompatActivity {
                                 .removeLocationUpdates(this);
                         if (locationResult != null && locationResult.getLocations().size() > 0) {
                             int latestLocationIndex = locationResult.getLocations().size() - 1;
+
+                            //simplify this-> lat = Double.toString(locationResult.getLocations().get(latestLocationIndex).getLatitude();
                             lat = locationResult.getLocations().get(latestLocationIndex).getLatitude();
                             latitude = Double.toString(lat);
                             lon = locationResult.getLocations().get(latestLocationIndex).getLongitude();
