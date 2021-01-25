@@ -25,7 +25,6 @@ import com.google.android.gms.location.LocationServices;
 
 import java.util.ArrayList;
 
-
 public class MainActivity extends AppCompatActivity {
 
     public Integer dist;
@@ -37,8 +36,6 @@ public class MainActivity extends AppCompatActivity {
     public String meters;
     private static final int REQUEST_CODE_LOCATION_PERMISSION = 1;
     PlacesService placesService = new PlacesService(MainActivity.this);
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,11 +54,9 @@ public class MainActivity extends AppCompatActivity {
             getCurrentLocation();
         }
 
-
         Button findbttn;
         Spinner distancespin;
         final RadioGroup RG;
-
 
 //initialize each component
         findbttn = (Button) findViewById(R.id.find_bttn);
@@ -127,7 +122,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
         findbttn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -187,7 +181,6 @@ public class MainActivity extends AppCompatActivity {
                             longitude = Double.toString(lon);
                         }
                     }
-
 
                 },  Looper.getMainLooper());
     }

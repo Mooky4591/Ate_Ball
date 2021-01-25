@@ -37,6 +37,7 @@ public class PlacesService {
                     public void onResponse(String response) {
                         result[0] = response;
                         volleyResponseListener.onResponse(result[0]);
+                        new parseJson(response);
                     }
                 }, new Response.ErrorListener() {
             @Override
