@@ -5,12 +5,16 @@ import android.content.Context;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
+
+import org.json.JSONObject;
 
 public class PlacesService {
 
     public static final String JSON_LOCATION = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=";
     private static final String KEY = "&key=AIzaSyABF2V9P8AcXW3iM_n7Wz--xIbVob5UIXg";
+
+    String TAG = "tag";
 
     Context context;
 
@@ -21,7 +25,7 @@ public class PlacesService {
     public interface VolleyResponseListener {
         void onError(String Message);
 
-        void onResponse(String Places);
+        void onResponse(JSONObject Places);
     }
 
     //Method to send the API call and manipulate the return string
@@ -29,20 +33,23 @@ public class PlacesService {
         String url = JSON_LOCATION + lat + "," + lon + "&radius=" + distance + "&type=restaurant&maxprice=" + price + KEY;
         final String[] result = {""};
 
-        StringRequest request = new StringRequest(
+        JsonObjectRequest request = new JsonObjectRequest(
                 Request.Method.GET,
                 url,
-                new Response.Listener<String>() {
+                null,
+                new Response.Listener<JSONObject>() {
                     @Override
-                    public void onResponse(String response) {
-                        result[0] = response;
-                        volleyResponseListener.onResponse(result[0]);
-                        new parseJson(response);
+                    public void onResponse(JSONObject response) {
+                        volleyResponseListener.onResponse(response);
+                        parseJson parse = new parseJson();
+                        parse.parseJson(response);
+
                     }
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
                 volleyResponseListener.onError("Something went wrong");
+                error.printStackTrace();
             }
         });
 
