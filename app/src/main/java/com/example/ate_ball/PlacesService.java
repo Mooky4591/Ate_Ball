@@ -41,8 +41,8 @@ public class PlacesService {
                     @Override
                     public void onResponse(JSONObject response) {
                         volleyResponseListener.onResponse(response);
-                        parseJson parse = new parseJson();
-                        parse.parseJson(response);
+//                        parseJson parse = new parseJson();
+//                        parse.parseJson(response);
 
                     }
                 }, new Response.ErrorListener() {

@@ -6,6 +6,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.app.AlertDialog;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Looper;
@@ -14,6 +16,8 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -23,6 +27,8 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -38,6 +44,16 @@ public class MainActivity extends AppCompatActivity {
     public String meters;
     private static final int REQUEST_CODE_LOCATION_PERMISSION = 1;
     PlacesService placesService = new PlacesService(MainActivity.this);
+    ArrayList<RestaurantObjectCreater> list_of_places;
+
+
+
+    private AlertDialog.Builder dialogueBuilder;
+    private AlertDialog dialogue;
+
+    private EditText popup_name, popup_price, popup_rating, popup_address;
+    private Button popup_button;
+    private ImageButton popup_logo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -140,10 +156,11 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void onResponse(JSONObject Places) {
-                        //Toast.makeText(MainActivity.this, Places, Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(MainActivity.this, (CharSequence) Places, Toast.LENGTH_SHORT).show();
+                        parseJson(Places);
                     }
                 });
-
+                createPopupDialogue();
             }
 
         });
@@ -194,5 +211,62 @@ public class MainActivity extends AppCompatActivity {
         } else {
             Toast.makeText(this, "Permission denied!", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    void createPopupDialogue() {
+        dialogueBuilder = new AlertDialog.Builder(this);
+        final View placePopupView = getLayoutInflater().inflate(R.layout.popup, null);
+        popup_name = (EditText) placePopupView.findViewById(R.id.popup_name);
+        popup_rating = (EditText) placePopupView.findViewById(R.id.popup_rating);
+        popup_price = (EditText) placePopupView.findViewById(R.id.popup_price);
+        popup_address = (EditText) placePopupView.findViewById(R.id.popup_address);
+        popup_button = (Button) placePopupView.findViewById(R.id.popup_button);
+        //popup_logo = (ImageButton) placePopupView.findViewById(R.id.po)
+
+//        int min = 0;
+//        int max = (list_of_places.size() - 1);
+//        int index = (int) (min + (Math.random() * max));
+//
+//
+//
+//        popup_name.setText(list_of_places.get(index).getName());
+//        popup_address.setText(list_of_places.get(index).getAddress());
+//        popup_price.setText(list_of_places.get(index).getPrice());
+//        popup_rating.setText(list_of_places.get(index).getRating());
+
+        dialogueBuilder.setView(placePopupView);
+        dialogue = dialogueBuilder.create();
+    }
+
+    void parseJson(JSONObject json){
+Runnable runnable = new Runnable() {
+    @Override
+    public void run() {
+        String name;
+        int price_level;
+        int rating;
+        String address;
+
+        try {
+            JSONArray jsonArray = json.getJSONArray("results");
+            list_of_places = new ArrayList<>(jsonArray.length());
+            RestaurantObjectCreater restaurantOB = null;
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject results = jsonArray.getJSONObject(i);
+                name = results.getString("name");
+                price_level = results.getInt("price_level");
+                rating = results.getInt("rating");
+                address = results.getString("vicinity");
+
+                restaurantOB = new RestaurantObjectCreater(name, price_level, rating, address);
+                list_of_places.add(restaurantOB);
+
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
     }
 }
